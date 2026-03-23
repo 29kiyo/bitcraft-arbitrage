@@ -199,9 +199,14 @@ footer a:hover{color:var(--sell)}
 
   <div class="filter-group">
   <span class="filter-label">リージョン</span>
-  <select class="filter-select" id="regionFilter" onchange="applyFilters()">
-    <option value="">すべて</option>
-  </select>
+  <div class="multi-select-wrap">
+    <button class="filter-select" style="cursor:pointer;min-width:120px;text-align:left" onclick="document.getElementById('regionDropdown').classList.toggle('hidden')">
+      <span id="regionLabel">すべて</span> ▾
+    </button>
+    <div id="regionDropdown" class="hidden" style="position:absolute;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);z-index:100;min-width:200px;max-height:250px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1)">
+      <div id="regionCheckboxes"></div>
+    </div>
+  </div>
 </div>
 
   <div class="table-wrap">
@@ -283,12 +288,21 @@ async function loadData() {
         if (o.regionId) regionMap[o.regionId] = o.regionName;
       });
     });
+    document.getElementById('regionCheckboxes').innerHTML =
+      Object.entries(regionMap)
+        .sort((a, b) => Number(a[0]) - Number(b[0]))
+        .map(([id, name]) => `
+          <label style="display:flex;align-items:center;gap:8px;padding:6px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)">
+            <input type="checkbox" value="${id}" onchange="updateRegionLabel();applyFilters()">
+            ${name} (R${id})
+          </label>`).join('');
     const regionSelect = document.getElementById('regionFilter');
     regionSelect.innerHTML = '<option value="">すべて</option>' +
       Object.entries(regionMap)
         .sort((a, b) => Number(a[0]) - Number(b[0]))
         .map(([id, name]) => `<option value="${id}">${name} (R${id})</option>`)
         .join('');
+        
     applyFilters();
 
   } catch(e) {
@@ -309,21 +323,27 @@ function setSort(type) {
 function applyFilters() {
   const tier         = document.getElementById('tierFilter').value;
   const minProfit    = Number(document.getElementById('minProfit').value) || 0;
-  const regionFilter = document.getElementById('regionFilter').value;
+  const regionFilter = [...document.querySelectorAll('#regionCheckboxes input:checked')].map(cb => cb.value);
 
   let filtered = [...allData];
-  if (tier)         filtered = filtered.filter(i => String(i.tier) === tier);
-  if (minProfit)    filtered = filtered.filter(i => i.profit >= minProfit);
-  if (regionFilter) {
+  if (tier)      filtered = filtered.filter(i => String(i.tier) === tier);
+  if (minProfit) filtered = filtered.filter(i => i.profit >= minProfit);
+  if (regionFilter.length > 0) {
     filtered = filtered.filter(i =>
-      i.sellOrders.some(o => String(o.regionId) === regionFilter) ||
-      i.buyOrders.some(o => String(o.regionId) === regionFilter)
+      i.sellOrders.some(o => regionFilter.includes(String(o.regionId))) &&
+      i.buyOrders.some(o => regionFilter.includes(String(o.regionId)))
     );
   }
 
   filtered.sort((a, b) => currentSort === 'rate' ? b.rate - a.rate : b.profit - a.profit);
   document.getElementById('resultCount').textContent = filtered.length + ' 件';
   renderTable(filtered);
+}
+
+function updateRegionLabel() {
+  const checked = [...document.querySelectorAll('#regionCheckboxes input:checked')];
+  document.getElementById('regionLabel').textContent =
+    checked.length === 0 ? 'すべて' : `${checked.length}件選択中`;
 }
 
 function renderTable(items) {
