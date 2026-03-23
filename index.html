@@ -197,6 +197,13 @@ footer a:hover{color:var(--sell)}
     <div class="result-count" id="resultCount"></div>
   </div>
 
+  <div class="filter-group">
+  <span class="filter-label">リージョン</span>
+  <select class="filter-select" id="regionFilter" onchange="applyFilters()">
+    <option value="">すべて</option>
+  </select>
+</div>
+
   <div class="table-wrap">
     <div id="stateBox" class="state-box">
       <div class="spinner"></div>
@@ -270,6 +277,18 @@ async function loadData() {
 
     document.getElementById('arbTable').classList.remove('hidden');
     document.getElementById('stateBox').classList.add('hidden');
+    const regionMap = {};
+    allData.forEach(item => {
+      [...item.sellOrders, ...item.buyOrders].forEach(o => {
+        if (o.regionId) regionMap[o.regionId] = o.regionName;
+      });
+    });
+    const regionSelect = document.getElementById('regionFilter');
+    regionSelect.innerHTML = '<option value="">すべて</option>' +
+      Object.entries(regionMap)
+        .sort((a, b) => Number(a[0]) - Number(b[0]))
+        .map(([id, name]) => `<option value="${id}">${name} (R${id})</option>`)
+        .join('');
     applyFilters();
 
   } catch(e) {
@@ -288,14 +307,21 @@ function setSort(type) {
 }
 
 function applyFilters() {
-  const tier      = document.getElementById('tierFilter').value;
-  const minProfit = Number(document.getElementById('minProfit').value) || 0;
+  const tier         = document.getElementById('tierFilter').value;
+  const minProfit    = Number(document.getElementById('minProfit').value) || 0;
+  const regionFilter = document.getElementById('regionFilter').value;
 
   let filtered = [...allData];
-  if (tier)      filtered = filtered.filter(i => String(i.tier) === tier);
-  if (minProfit) filtered = filtered.filter(i => i.profit >= minProfit);
-  filtered.sort((a, b) => currentSort === 'rate' ? b.rate - a.rate : b.profit - a.profit);
+  if (tier)         filtered = filtered.filter(i => String(i.tier) === tier);
+  if (minProfit)    filtered = filtered.filter(i => i.profit >= minProfit);
+  if (regionFilter) {
+    filtered = filtered.filter(i =>
+      i.sellOrders.some(o => String(o.regionId) === regionFilter) ||
+      i.buyOrders.some(o => String(o.regionId) === regionFilter)
+    );
+  }
 
+  filtered.sort((a, b) => currentSort === 'rate' ? b.rate - a.rate : b.profit - a.profit);
   document.getElementById('resultCount').textContent = filtered.length + ' 件';
   renderTable(filtered);
 }
