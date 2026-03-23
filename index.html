@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BitCraft Arbitrage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #f5f4f0;
+  --bg2:       #eceae4;
+  --bg3:       #ffffff;
+  --border:    #d8d4cc;
+  --border2:   #c4bfb5;
+  --text:      #1a1916;
+  --text2:     #6b6760;
+  --text3:     #9e9b94;
+  --sell:      #0a7a5a;
+  --sell-bg:   #e6f5f0;
+  --buy:       #1a5fb8;
+  --buy-bg:    #e8f0fc;
+  --profit:    #0a7a5a;
+  --danger:    #c0392b;
+  --gold:      #b8860b;
+  --gold-bg:   #fdf8e8;
+  --radius:    6px;
+  --radius-lg: 12px;
+  --shadow:    0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ヘッダー */
+header {
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow);
+}
+.header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.logo {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.logo-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+.logo-title span { color: var(--sell); }
+.logo-sub {
+  font-size: 11px;
+  color: var(--text3);
+  font-family: 'JetBrains Mono', monospace;
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.updated-at {
+  font-size: 11px;
+  color: var(--text3);
+  font-family: 'JetBrains Mono', monospace;
+}
+.refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--text);
+  color: var(--bg3);
+  border: none;
+  border-radius: var(--radius);
+  padding: 7px 14px;
+  font-size: 13px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.refresh-btn:hover { background: #333; }
+.refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.refresh-icon { font-size: 14px; }
+
+/* メイン */
+main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* サマリーバー */
+.summary-bar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.summary-label {
+  font-size: 10px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text3);
+}
+.summary-value {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+}
+.summary-divider {
+  width: 1px;
+  height: 36px;
+  background: var(--border);
+}
+
+/* フィルターバー */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.filter-label {
+  font-size: 11px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text3);
+  white-space: nowrap;
+}
+.filter-select {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 6px 10px;
+  font-size: 13px;
+  font-family: 'Noto Sans JP', sans-serif;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.filter-select:focus { border-color: var(--sell); }
+.filter-input {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 6px 10px;
+  font-size: 13px;
+  font-family: 'JetBrains Mono', monospace;
+  outline: none;
+  width: 100px;
+  transition: border-color 0.15s;
+}
+.filter-input:focus { border-color: var(--sell); }
+.sort-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  font-size: 12px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.sort-btn:hover { border-color: var(--sell); color: var(--sell); }
+.sort-btn.active {
+  background: var(--sell-bg);
+  border-color: var(--sell);
+  color: var(--sell);
+}
+.result-count {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text3);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* テーブル */
+.table-wrap {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+thead tr {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+}
+thead th {
+  padding: 10px 16px;
+  text-align: left;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text3);
+  white-space: nowrap;
+}
+thead th.num { text-align: right; }
+tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+  cursor: pointer;
+}
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: #fafaf8; }
+tbody td {
+  padding: 12px 16px;
+  vertical-align: middle;
+}
+tbody td.num {
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+}
+
+/* アイテムセル */
+.item-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.item-icon {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 4px;
+  background: var(--bg2);
+}
+.item-icon-placeholder {
+  width: 36px;
+  height: 36px;
+  background: var(--bg2);
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.item-info { min-width: 0; }
+.item-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+.item-en {
+  font-size: 11px;
+  color: var(--text3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+/* バッジ */
+.tier-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 20px;
+  background: var(--gold-bg);
+  color: var(--gold);
+  border: 1px solid #e8d89a;
+  border-radius: 4px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+}
+.rarity-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+.rarity-Common    { background: #f0f0ee; color: #888; border: 1px solid #ddd; }
+.rarity-Uncommon  { background: var(--sell-bg); color: var(--sell); border: 1px solid #a8dcc8; }
+.rarity-Rare      { background: var(--buy-bg); color: var(--buy); border: 1px solid #a8c4e8; }
+.rarity-Epic      { background: #f5eeff; color: #7b2fbe; border: 1px solid #d4b0f0; }
+.rarity-Legendary { background: var(--gold-bg); color: var(--gold); border: 1px solid #e8d89a; }
+
+/* 価格セル */
+.sell-price { color: var(--sell); font-weight: 600; }
+.buy-price  { color: var(--buy);  font-weight: 600; }
+.profit-cell {
+  color: var(--profit);
+  font-weight: 700;
+  font-size: 14px;
+}
+.rate-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--sell-bg);
+  color: var(--sell);
+  border: 1px solid #a8dcc8;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* リージョン展開 */
+.region-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text3);
+  border-radius: var(--radius);
+  padding: 3px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'Space Grotesk', sans-serif;
+}
+.region-toggle:hover { border-color: var(--buy); color: var(--buy); }
+.region-detail {
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+.region-detail td {
+  padding: 12px 16px;
+}
+.region-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.region-section-title {
+  font-size: 10px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+.region-section-title.sell { color: var(--sell); }
+.region-section-title.buy  { color: var(--buy); }
+.region-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 10px;
+  background: var(--bg3);
+  border-radius: var(--radius);
+  margin-bottom: 4px;
+  border: 1px solid var(--border);
+  font-size: 12px;
+}
+.region-name { color: var(--text2); }
+.region-price { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+.region-price.sell { color: var(--sell); }
+.region-price.buy  { color: var(--buy); }
+.region-qty { font-size: 11px; color: var(--text3); }
+
+/* ローディング・エラー・空 */
+.state-box {
+  text-align: center;
+  padding: 80px 24px;
+  color: var(--text3);
+}
+.state-icon { font-size: 2rem; margin-bottom: 12px; }
+.state-title { font-size: 16px; font-weight: 500; color: var(--text2); margin-bottom: 6px; }
+.state-sub { font-size: 13px; }
+.spinner {
+  width: 32px; height: 32px;
+  border: 2px solid var(--border2);
+  border-top-color: var(--sell);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* コイン */
+.coin { font-size: 0.85em; }
+
+/* フッター */
+footer {
+  text-align: center;
+  padding: 20px;
+  color: var(--text3);
+  font-size: 11px;
+  border-top: 1px solid var(--border);
+  margin-top: 40px;
+}
+footer a { color: var(--text3); text-decoration: none; }
+footer a:hover { color: var(--sell); }
+
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-title">BitCraft <span>Arbitrage</span></div>
+      <div class="logo-sub">転売チャンスリスト</div>
+    </div>
+    <div class="header-right">
+      <div class="updated-at" id="updatedAt">—</div>
+      <button class="refresh-btn" id="refreshBtn" onclick="loadData()">
+        <span class="refresh-icon">↻</span> 更新
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- サマリー -->
+  <div class="summary-bar" id="summaryBar">
+    <div class="summary-item">
+      <div class="summary-label">転売チャンス</div>
+      <div class="summary-value" id="sumTotal">—</div>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-item">
+      <div class="summary-label">最大利益</div>
+      <div class="summary-value" id="sumMaxProfit">—</div>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-item">
+      <div class="summary-label">最大利益率</div>
+      <div class="summary-value" id="sumMaxRate">—</div>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-item">
+      <div class="summary-label">平均利益</div>
+      <div class="summary-value" id="sumAvgProfit">—</div>
+    </div>
+  </div>
+
+  <!-- フィルター -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <span class="filter-label">SORT</span>
+      <button class="sort-btn active" id="sortProfit" onclick="setSort('profit')">利益順</button>
+      <button class="sort-btn" id="sortRate" onclick="setSort('rate')">利益率順</button>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">TIER</span>
+      <select class="filter-select" id="tierFilter" onchange="applyFilters()">
+        <option value="">すべて</option>
+        <option value="1">T1</option>
+        <option value="2">T2</option>
+        <option value="3">T3</option>
+        <option value="4">T4</option>
+        <option value="5">T5</option>
+        <option value="6">T6</option>
+        <option value="7">T7</option>
+        <option value="8">T8</option>
+        <option value="9">T9</option>
+        <option value="10">T10</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">最低利益</span>
+      <input class="filter-input" id="minProfit" type="number" placeholder="例: 100" min="0" oninput="applyFilters()">
+    </div>
+    <div class="result-count" id="resultCount"></div>
+  </div>
+
+  <!-- テーブル -->
+  <div class="table-wrap">
+    <div id="stateBox" class="state-box">
+      <div class="spinner"></div>
+      <div class="state-title">データ取得中...</div>
+    </div>
+    <table id="arbTable" class="hidden">
+      <thead>
+        <tr>
+          <th>アイテム</th>
+          <th>TIER</th>
+          <th class="num">最低売値</th>
+          <th class="num">最高買値</th>
+          <th class="num">利益</th>
+          <th class="num">利益率</th>
+          <th>注文詳細</th>
+        </tr>
+      </thead>
+      <tbody id="arbBody"></tbody>
+    </table>
+  </div>
+</main>
+
+<footer>
+  Data provided by <a href="https://bitjita.com" target="_blank">Bitjita</a> ·
+  Not affiliated with Clockwork Labs ·
+  <a href="https://github.com/29kiyo/bitcraft-market" target="_blank">GitHub</a>
+</footer>
+
+<script>
+const API_BASE = 'https://bitcraft-arbitrage.YOUR_SUBDOMAIN.workers.dev/api';
+const ICON_BASE = 'https://bitjita.com/';
+
+// 日本語翻訳テーブルはbitcraft-marketのtranslations.jsと共有予定
+// 暫定的にEN_EXACT等をインポート想定（別途translations.jsを読み込む）
+
+let allData = [];
+let currentSort = 'profit';
+let expandedRows = new Set();
+
+async function loadData() {
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="refresh-icon">↻</span> 取得中...';
+  showState('loading');
+
+  try {
+    const res = await fetch(`${API_BASE}/arbitrage`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+
+    if (json.error) {
+      showState('error', json.error);
+      return;
+    }
+
+    allData = json.items || [];
+
+    // サマリー更新
+    document.getElementById('sumTotal').textContent = allData.length.toLocaleString('ja-JP');
+    document.getElementById('sumMaxProfit').textContent = allData.length > 0
+      ? allData[0].profit.toLocaleString('ja-JP') + ' 🪙' : '—';
+    document.getElementById('sumMaxRate').textContent = allData.length > 0
+      ? '+' + Math.max(...allData.map(i => i.rate)) + '%' : '—';
+    const avgProfit = allData.length > 0
+      ? Math.floor(allData.reduce((s, i) => s + i.profit, 0) / allData.length) : 0;
+    document.getElementById('sumAvgProfit').textContent = avgProfit.toLocaleString('ja-JP') + ' 🪙';
+
+    // 更新時刻
+    if (json.updatedAt) {
+      const d = new Date(json.updatedAt);
+      document.getElementById('updatedAt').textContent =
+        '最終更新: ' + d.toLocaleString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    applyFilters();
+    document.getElementById('arbTable').classList.remove('hidden');
+    document.getElementById('stateBox').classList.add('hidden');
+
+  } catch(e) {
+    showState('error', 'データの取得に失敗しました: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="refresh-icon">↻</span> 更新';
+  }
+}
+
+function setSort(type) {
+  currentSort = type;
+  document.getElementById('sortProfit').classList.toggle('active', type === 'profit');
+  document.getElementById('sortRate').classList.toggle('active', type === 'rate');
+  applyFilters();
+}
+
+function applyFilters() {
+  const tier     = document.getElementById('tierFilter').value;
+  const minProfit = Number(document.getElementById('minProfit').value) || 0;
+
+  let filtered = [...allData];
+  if (tier)      filtered = filtered.filter(i => String(i.tier) === tier);
+  if (minProfit) filtered = filtered.filter(i => i.profit >= minProfit);
+
+  filtered.sort((a, b) => currentSort === 'rate' ? b.rate - a.rate : b.profit - a.profit);
+
+  document.getElementById('resultCount').textContent = `${filtered.length} 件`;
+  renderTable(filtered);
+}
+
+function renderTable(items) {
+  const tbody = document.getElementById('arbBody');
+
+  if (items.length === 0) {
+    tbody.innerHTML = `
+      <tr><td colspan="7">
+        <div class="state-box" style="padding:40px">
+          <div class="state-icon">🔍</div>
+          <div class="state-title">該当するアイテムがありません</div>
+          <div class="state-sub">フィルター条件を変えてみてください</div>
+        </div>
+      </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = items.map(item => {
+    const jaName = typeof getJaName === 'function' ? getJaName(item.name) : null;
+    const icon = item.iconAsset
+      ? `<img class="item-icon" src="${ICON_BASE}${item.iconAsset}.webp" alt="" onerror="this.style.display='none'">`
+      : `<div class="item-icon-placeholder"></div>`;
+    const expanded = expandedRows.has(item.id);
+
+    const detailRow = expanded ? `
+      <tr class="region-detail" id="detail-${item.id}">
+        <td colspan="7">
+          <div class="region-grid">
+            <div>
+              <div class="region-section-title sell">🟢 売り注文（安い順）</div>
+              ${item.sellOrders.map(o => `
+                <div class="region-row">
+                  <span class="region-name">${o.claimName} / ${o.regionName}</span>
+                  <span class="region-price sell">${Math.floor(o.price).toLocaleString('ja-JP')} 🪙</span>
+                  <span class="region-qty">×${Math.floor(o.quantity)}</span>
+                </div>`).join('')}
+            </div>
+            <div>
+              <div class="region-section-title buy">🔵 買い注文（高い順）</div>
+              ${item.buyOrders.map(o => `
+                <div class="region-row">
+                  <span class="region-name">${o.claimName} / ${o.regionName}</span>
+                  <span class="region-price buy">${Math.floor(o.price).toLocaleString('ja-JP')} 🪙</span>
+                  <span class="region-qty">×${Math.floor(o.quantity)}</span>
+                </div>`).join('')}
+            </div>
+          </div>
+        </td>
+      </tr>` : '';
+
+    return `
+      <tr onclick="toggleDetail('${item.id}')">
+        <td>
+          <div class="item-cell">
+            ${icon}
+            <div class="item-info">
+              <div class="item-name">${jaName || item.name}</div>
+              ${jaName ? `<div class="item-en">${item.name}</div>` : ''}
+            </div>
+          </div>
+        </td>
+        <td>
+          ${item.tier > 0 ? `<span class="tier-badge">T${item.tier}</span>` : ''}
+          <span class="rarity-badge rarity-${item.rarityStr}">${item.rarityStr}</span>
+        </td>
+        <td class="num sell-price">${item.sell.toLocaleString('ja-JP')} <span class="coin">🪙</span></td>
+        <td class="num buy-price">${item.buy.toLocaleString('ja-JP')} <span class="coin">🪙</span></td>
+        <td class="num profit-cell">+${item.profit.toLocaleString('ja-JP')} <span class="coin">🪙</span></td>
+        <td class="num"><span class="rate-cell">+${item.rate}%</span></td>
+        <td><button class="region-toggle" onclick="event.stopPropagation();toggleDetail('${item.id}')">${expanded ? '▲ 閉じる' : '▼ 詳細'}</button></td>
+      </tr>
+      ${detailRow}
+    `;
+  }).join('');
+}
+
+function toggleDetail(id) {
+  if (expandedRows.has(id)) {
+    expandedRows.delete(id);
+  } else {
+    expandedRows.add(id);
+  }
+  applyFilters();
+}
+
+function showState(type, msg) {
+  const box = document.getElementById('stateBox');
+  box.classList.remove('hidden');
+  if (type === 'loading') {
+    box.innerHTML = `<div class="spinner"></div><div class="state-title">データ取得中...</div>`;
+  } else if (type === 'error') {
+    box.innerHTML = `
+      <div class="state-icon">⚠️</div>
+      <div class="state-title">エラーが発生しました</div>
+      <div class="state-sub">${msg}</div>`;
+  }
+}
+
+// 初回ロード
+loadData();
+</script>
+
+<!-- translations.jsを共有する場合はここに追加 -->
+<!-- <script src="path/to/translations.js"></script> -->
+
+</body>
+</html>
