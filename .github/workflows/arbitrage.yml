@@ -1,0 +1,158 @@
+name: Update Arbitrage Data
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'  # 30分ごとに実行
+  workflow_dispatch:          # 手動実行も可能
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch and process arbitrage data
+        env:
+          KV_ACCOUNT_ID:  ${{ secrets.CF_ACCOUNT_ID }}
+          KV_NAMESPACE_ID: ${{ secrets.CF_KV_NAMESPACE_ID }}
+          KV_API_TOKEN:   ${{ secrets.CF_KV_API_TOKEN }}
+        run: |
+          node << 'EOF'
+          const https = require('https');
+
+          const BITJITA_BASE  = 'https://bitjita.com/api';
+          const HEADERS       = { 'x-app-identifier': 'bitcraft-market-search-github-pages' };
+          const BATCH_SIZE    = 20;
+          const BATCH_DELAY   = 200;
+
+          function fetchJson(url, headers = {}) {
+            return new Promise((resolve, reject) => {
+              const req = https.get(url, { headers: { ...HEADERS, ...headers } }, res => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                  try { resolve(JSON.parse(data)); }
+                  catch(e) { resolve(null); }
+                });
+              });
+              req.on('error', () => resolve(null));
+              req.setTimeout(10000, () => { req.destroy(); resolve(null); });
+            });
+          }
+
+          function sleep(ms) {
+            return new Promise(r => setTimeout(r, ms));
+          }
+
+          async function main() {
+            console.log('アイテムリスト取得中...');
+            const listData = await fetchJson(`${BITJITA_BASE}/market?hasOrders=true&limit=2000`);
+            const allItems = listData?.data?.items || [];
+            console.log(`アイテム数: ${allItems.length}`);
+
+            const results = [];
+            let processed = 0;
+
+            for (let i = 0; i < allItems.length; i += BATCH_SIZE) {
+              const batch = allItems.slice(i, i + BATCH_SIZE);
+              const fetched = await Promise.all(batch.map(item => {
+                const type = item.itemType === 1 ? 'cargo' : 'item';
+                return fetchJson(`${BITJITA_BASE}/market/${type}/${item.id}`);
+              }));
+
+              for (let j = 0; j < fetched.length; j++) {
+                const data = fetched[j];
+                if (!data?.stats) continue;
+                const sell = Number(data.stats.lowestSell);
+                const buy  = Number(data.stats.highestBuy);
+                if (!sell || !buy || buy <= sell) continue;
+
+                const item   = allItems[i + j];
+                const profit = Math.floor(buy - sell);
+                const rate   = Math.floor((profit / sell) * 100);
+
+                const sellOrders = (data.sellOrders || [])
+                  .sort((a, b) => Number(a.priceThreshold) - Number(b.priceThreshold))
+                  .slice(0, 5).map(o => ({
+                    price:      Math.floor(Number(o.priceThreshold)),
+                    quantity:   Number(o.quantity),
+                    claimName:  o.claimName  || '—',
+                    regionName: o.regionName || '—',
+                    regionId:   o.regionId   || '',
+                  }));
+
+                const buyOrders = (data.buyOrders || [])
+                  .sort((a, b) => Number(b.priceThreshold) - Number(a.priceThreshold))
+                  .slice(0, 5).map(o => ({
+                    price:      Math.floor(Number(o.priceThreshold)),
+                    quantity:   Number(o.quantity),
+                    claimName:  o.claimName  || '—',
+                    regionName: o.regionName || '—',
+                    regionId:   o.regionId   || '',
+                  }));
+
+                results.push({
+                  id: item.id, name: item.name,
+                  iconAsset:  item.iconAssetName || '',
+                  tier:       item.tier      || 0,
+                  rarityStr:  item.rarityStr || '',
+                  sell:  Math.floor(sell),
+                  buy:   Math.floor(buy),
+                  profit, rate, sellOrders, buyOrders,
+                });
+              }
+
+              processed += batch.length;
+              if (processed % 100 === 0) {
+                console.log(`進捗: ${processed}/${allItems.length} 候補: ${results.length}件`);
+              }
+              await sleep(BATCH_DELAY);
+            }
+
+            results.sort((a, b) => b.profit - a.profit);
+            console.log(`完了！転売チャンス: ${results.length}件`);
+
+            const payload = JSON.stringify({
+              updatedAt: new Date().toISOString(),
+              count:     results.length,
+              items:     results,
+            });
+
+            // Cloudflare KVに保存
+            const accountId   = process.env.KV_ACCOUNT_ID;
+            const namespaceId = process.env.KV_NAMESPACE_ID;
+            const apiToken    = process.env.KV_API_TOKEN;
+
+            await new Promise((resolve, reject) => {
+              const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/storage/kv/namespaces/${namespaceId}/values/arbitrage_data`;
+              const body = Buffer.from(payload);
+              const options = {
+                method: 'PUT',
+                headers: {
+                  'Authorization': `Bearer ${apiToken}`,
+                  'Content-Type': 'application/json',
+                  'Content-Length': body.length,
+                },
+              };
+              const req = https.request(url, options, res => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                  const result = JSON.parse(data);
+                  if (result.success) {
+                    console.log('KVへの保存成功！');
+                    resolve();
+                  } else {
+                    reject(new Error('KV保存失敗: ' + JSON.stringify(result.errors)));
+                  }
+                });
+              });
+              req.on('error', reject);
+              req.write(body);
+              req.end();
+            });
+          }
+
+          main().catch(err => {
+            console.error('エラー:', err.message);
+            process.exit(1);
+          });
+          EOF
