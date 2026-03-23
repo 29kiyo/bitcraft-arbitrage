@@ -27,8 +27,6 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:14px;line-height:1.6;min-height:100vh}
-
-/* ヘッダー */
 header{background:var(--bg3);border-bottom:1px solid var(--border);padding:0 24px;position:sticky;top:0;z-index:100;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
 .header-inner{max-width:1400px;margin:0 auto;height:56px;display:flex;align-items:center;justify-content:space-between}
 .logo{display:flex;align-items:baseline;gap:8px}
@@ -40,20 +38,14 @@ header{background:var(--bg3);border-bottom:1px solid var(--border);padding:0 24p
 .refresh-btn{display:flex;align-items:center;gap:6px;background:var(--text);color:var(--bg3);border:none;border-radius:var(--radius);padding:7px 14px;font-size:13px;font-family:'Space Grotesk',sans-serif;font-weight:500;cursor:pointer;transition:background 0.15s}
 .refresh-btn:hover{background:#333}
 .refresh-btn:disabled{opacity:0.5;cursor:not-allowed}
-
-/* メイン */
 main{max-width:1400px;margin:0 auto;padding:24px}
-
-/* サマリー */
 .summary-bar{display:flex;align-items:center;gap:24px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
 .summary-item{display:flex;flex-direction:column;gap:2px}
 .summary-label{font-size:10px;font-family:'Space Grotesk',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3)}
 .summary-value{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700}
 .summary-divider{width:1px;height:36px;background:var(--border)}
-
-/* フィルター */
 .filter-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
-.filter-group{display:flex;align-items:center;gap:6px}
+.filter-group{display:flex;align-items:center;gap:6px;position:relative}
 .filter-label{font-size:11px;font-family:'Space Grotesk',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);white-space:nowrap}
 .filter-select,.filter-input{background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:6px 10px;font-size:13px;outline:none;cursor:pointer;transition:border-color 0.15s}
 .filter-input{font-family:'JetBrains Mono',monospace;width:110px}
@@ -62,8 +54,12 @@ main{max-width:1400px;margin:0 auto;padding:24px}
 .sort-btn:hover{border-color:var(--sell);color:var(--sell)}
 .sort-btn.active{background:var(--sell-bg);border-color:var(--sell);color:var(--sell)}
 .result-count{margin-left:auto;font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace}
-
-/* テーブル */
+.region-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:6px 10px;font-size:13px;cursor:pointer;min-width:120px;text-align:left;transition:border-color 0.15s}
+.region-btn:hover{border-color:var(--sell)}
+.region-dropdown{position:absolute;top:calc(100% + 4px);left:0;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);z-index:200;min-width:220px;max-height:260px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+.region-dropdown label{display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);transition:background 0.1s}
+.region-dropdown label:hover{background:var(--bg2)}
+.region-dropdown label:last-child{border-bottom:none}
 .table-wrap{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
 table{width:100%;border-collapse:collapse}
 thead tr{background:var(--bg2);border-bottom:1px solid var(--border)}
@@ -74,15 +70,11 @@ tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:#fafaf8}
 tbody td{padding:12px 16px;vertical-align:middle}
 tbody td.num{text-align:right;font-family:'JetBrains Mono',monospace;font-size:13px}
-
-/* アイテムセル */
 .item-cell{display:flex;align-items:center;gap:10px}
 .item-icon{width:36px;height:36px;object-fit:contain;flex-shrink:0;border-radius:4px;background:var(--bg2)}
 .item-icon-ph{width:36px;height:36px;background:var(--bg2);border-radius:4px;flex-shrink:0}
 .item-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
 .item-en{font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
-
-/* バッジ */
 .tier-badge{display:inline-flex;align-items:center;justify-content:center;width:28px;height:20px;background:var(--gold-bg);color:var(--gold);border:1px solid #e8d89a;border-radius:4px;font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:700}
 .rarity-badge{display:inline-block;font-size:10px;font-family:'Space Grotesk',sans-serif;font-weight:600;padding:1px 6px;border-radius:3px}
 .rarity-Common{background:#f0f0ee;color:#888;border:1px solid #ddd}
@@ -90,14 +82,10 @@ tbody td.num{text-align:right;font-family:'JetBrains Mono',monospace;font-size:1
 .rarity-Rare{background:var(--buy-bg);color:var(--buy);border:1px solid #a8c4e8}
 .rarity-Epic{background:#f5eeff;color:#7b2fbe;border:1px solid #d4b0f0}
 .rarity-Legendary{background:var(--gold-bg);color:var(--gold);border:1px solid #e8d89a}
-
-/* 価格 */
 .sell-price{color:var(--sell);font-weight:600}
 .buy-price{color:var(--buy);font-weight:600}
 .profit-cell{color:var(--sell);font-weight:700;font-size:14px}
 .rate-cell{display:inline-flex;align-items:center;background:var(--sell-bg);color:var(--sell);border:1px solid #a8dcc8;border-radius:4px;padding:2px 8px;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700}
-
-/* 詳細行 */
 .detail-btn{background:none;border:1px solid var(--border);color:var(--text3);border-radius:var(--radius);padding:3px 8px;font-size:11px;cursor:pointer;transition:all 0.15s;font-family:'Space Grotesk',sans-serif}
 .detail-btn:hover{border-color:var(--buy);color:var(--buy)}
 .detail-row{background:var(--bg)}
@@ -112,25 +100,19 @@ tbody td.num{text-align:right;font-family:'JetBrains Mono',monospace;font-size:1
 .order-price.sell{color:var(--sell)}
 .order-price.buy{color:var(--buy)}
 .order-qty{font-size:11px;color:var(--text3)}
-
-/* ステート */
 .state-box{text-align:center;padding:80px 24px;color:var(--text3)}
 .state-icon{font-size:2rem;margin-bottom:12px}
 .state-title{font-size:16px;font-weight:500;color:var(--text2);margin-bottom:6px}
 .state-sub{font-size:13px}
 .spinner{width:32px;height:32px;border:2px solid var(--border2);border-top-color:var(--sell);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-/* フッター */
 footer{text-align:center;padding:20px;color:var(--text3);font-size:11px;border-top:1px solid var(--border);margin-top:40px}
 footer a{color:var(--text3);text-decoration:none}
 footer a:hover{color:var(--sell)}
 .hidden{display:none!important}
-
 @media(max-width:768px){
   .summary-bar{flex-wrap:wrap;gap:16px}
   .detail-grid{grid-template-columns:1fr}
-  .price-cards{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 </head>
@@ -194,20 +176,17 @@ footer a:hover{color:var(--sell)}
       <input class="filter-input" id="minProfit" type="number" placeholder="例: 100" min="0" oninput="applyFilters()">
       <span style="font-size:12px;color:var(--text3)">🪙以上</span>
     </div>
+    <div class="filter-group">
+      <span class="filter-label">リージョン</span>
+      <button class="region-btn" id="regionBtn" onclick="toggleRegionDropdown()">
+        <span id="regionLabel">すべて</span> ▾
+      </button>
+      <div id="regionDropdown" class="region-dropdown hidden" id="regionDropdown">
+        <div id="regionCheckboxes"></div>
+      </div>
+    </div>
     <div class="result-count" id="resultCount"></div>
   </div>
-
-  <div class="filter-group">
-  <span class="filter-label">リージョン</span>
-  <div class="multi-select-wrap">
-    <button class="filter-select" style="cursor:pointer;min-width:120px;text-align:left" onclick="document.getElementById('regionDropdown').classList.toggle('hidden')">
-      <span id="regionLabel">すべて</span> ▾
-    </button>
-    <div id="regionDropdown" class="hidden" style="position:absolute;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);z-index:100;min-width:200px;max-height:250px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1)">
-      <div id="regionCheckboxes"></div>
-    </div>
-  </div>
-</div>
 
   <div class="table-wrap">
     <div id="stateBox" class="state-box">
@@ -238,12 +217,23 @@ footer a:hover{color:var(--sell)}
 </footer>
 
 <script>
-const API_BASE = 'https://bitcraft-arbitrage.29kiyo.workers.dev/api';
+const API_BASE  = 'https://bitcraft-arbitrage.29kiyo.workers.dev/api';
 const ICON_BASE = 'https://bitjita.com/';
 
-let allData = [];
+let allData     = [];
 let currentSort = 'profit';
 let expandedRows = new Set();
+
+// ドロップダウン外クリックで閉じる
+document.addEventListener('click', e => {
+  if (!e.target.closest('.filter-group')) {
+    document.getElementById('regionDropdown').classList.add('hidden');
+  }
+});
+
+function toggleRegionDropdown() {
+  document.getElementById('regionDropdown').classList.toggle('hidden');
+}
 
 async function loadData() {
   const btn = document.getElementById('refreshBtn');
@@ -252,7 +242,7 @@ async function loadData() {
   showState('loading');
 
   try {
-    const res = await fetch(`${API_BASE}/arbitrage`);
+    const res  = await fetch(`${API_BASE}/arbitrage`);
     const json = await res.json();
 
     if (!res.ok || json.error) {
@@ -280,8 +270,7 @@ async function loadData() {
         '最終更新: ' + d.toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     }
 
-    document.getElementById('arbTable').classList.remove('hidden');
-    document.getElementById('stateBox').classList.add('hidden');
+    // リージョン一覧を生成
     const regionMap = {};
     allData.forEach(item => {
       [...item.sellOrders, ...item.buyOrders].forEach(o => {
@@ -292,17 +281,13 @@ async function loadData() {
       Object.entries(regionMap)
         .sort((a, b) => Number(a[0]) - Number(b[0]))
         .map(([id, name]) => `
-          <label style="display:flex;align-items:center;gap:8px;padding:6px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)">
+          <label>
             <input type="checkbox" value="${id}" onchange="updateRegionLabel();applyFilters()">
             ${name} (R${id})
           </label>`).join('');
-    const regionSelect = document.getElementById('regionFilter');
-    regionSelect.innerHTML = '<option value="">すべて</option>' +
-      Object.entries(regionMap)
-        .sort((a, b) => Number(a[0]) - Number(b[0]))
-        .map(([id, name]) => `<option value="${id}">${name} (R${id})</option>`)
-        .join('');
-        
+
+    document.getElementById('arbTable').classList.remove('hidden');
+    document.getElementById('stateBox').classList.add('hidden');
     applyFilters();
 
   } catch(e) {
@@ -318,6 +303,12 @@ function setSort(type) {
   document.getElementById('sortProfit').classList.toggle('active', type === 'profit');
   document.getElementById('sortRate').classList.toggle('active', type === 'rate');
   applyFilters();
+}
+
+function updateRegionLabel() {
+  const checked = [...document.querySelectorAll('#regionCheckboxes input:checked')];
+  document.getElementById('regionLabel').textContent =
+    checked.length === 0 ? 'すべて' : `${checked.length}件選択中`;
 }
 
 function applyFilters() {
@@ -338,12 +329,6 @@ function applyFilters() {
   filtered.sort((a, b) => currentSort === 'rate' ? b.rate - a.rate : b.profit - a.profit);
   document.getElementById('resultCount').textContent = filtered.length + ' 件';
   renderTable(filtered);
-}
-
-function updateRegionLabel() {
-  const checked = [...document.querySelectorAll('#regionCheckboxes input:checked')];
-  document.getElementById('regionLabel').textContent =
-    checked.length === 0 ? 'すべて' : `${checked.length}件選択中`;
 }
 
 function renderTable(items) {
@@ -436,6 +421,6 @@ function showState(type, msg) {
 
 loadData();
 </script>
-  <script src="translations.js"></script>
+<script src="translations.js"></script>
 </body>
 </html>
