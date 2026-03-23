@@ -346,6 +346,43 @@ function applyFilters() {
   });
 }
 
+  function applyFilters() {
+  const tier         = document.getElementById('tierFilter').value;
+  const minProfit    = Number(document.getElementById('minProfit').value) || 0;
+  const regionFilter = [...document.querySelectorAll('#regionCheckboxes input:checked')].map(cb => cb.value);
+
+  let filtered = [...allData];
+  if (tier)      filtered = filtered.filter(i => String(i.tier) === tier);
+  if (minProfit) filtered = filtered.filter(i => i.profit >= minProfit);
+  if (regionFilter.length > 0) {
+    filtered = filtered.filter(i =>
+      i.sellOrders.some(o => regionFilter.includes(String(o.regionId))) &&
+      i.buyOrders.some(o => regionFilter.includes(String(o.regionId)))
+    );
+  }
+
+  filtered.sort((a, b) => {
+    if (regionFilter.length > 0) {
+      const aSell = Math.min(...a.sellOrders.filter(o => regionFilter.includes(String(o.regionId))).map(o => o.price).concat(Infinity));
+      const bSell = Math.min(...b.sellOrders.filter(o => regionFilter.includes(String(o.regionId))).map(o => o.price).concat(Infinity));
+      const aBuy  = Math.max(...a.buyOrders.filter(o => regionFilter.includes(String(o.regionId))).map(o => o.price).concat(0));
+      const bBuy  = Math.max(...b.buyOrders.filter(o => regionFilter.includes(String(o.regionId))).map(o => o.price).concat(0));
+      const aProfit = aBuy - aSell;
+      const bProfit = bBuy - bSell;
+      if (currentSort === 'rate') {
+        const aRate = aSell > 0 ? Math.floor((aProfit / aSell) * 100) : 0;
+        const bRate = bSell > 0 ? Math.floor((bProfit / bSell) * 100) : 0;
+        return bRate - aRate;
+      }
+      return bProfit - aProfit;
+    }
+    return currentSort === 'rate' ? b.rate - a.rate : b.profit - a.profit;
+  });
+
+  document.getElementById('resultCount').textContent = filtered.length + ' 件';
+  renderTable(filtered);
+}
+
 function renderTable(items) {
   const tbody = document.getElementById('arbBody');
   if (items.length === 0) {
