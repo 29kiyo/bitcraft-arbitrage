@@ -1,0 +1,19 @@
+name: Delete All Workflow Runs
+
+on:
+  workflow_dispatch: # 手動実行ボタンを有効化
+
+permissions:
+  actions: write
+
+jobs:
+  delete-runs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete workflow runs
+        uses: Mattraks/delete-workflow-runs@v2.0.6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          retain_days: 0          # 0日経過（＝すべて）の履歴を対象にする
+          keep_minimum_runs: 0    # 残す件数を0にする
