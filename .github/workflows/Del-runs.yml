@@ -17,5 +17,6 @@ jobs:
           repository: ${{ github.repository }}
           retain_days: 1          # 直近3日間に実行された履歴は残す
           keep_minimum_runs: 5    # 最新の5件の履歴は必ず残す
-          # 👇 成功(completed)とキャンセル(cancelled)を削除対象にし、失敗(failure)は残す
-          delete_workflow_by_status_current: "completed,cancelled"
+          delete_workflow_by_status_current: "completed,cancelled" # 失敗は残す
+          # 👇 ここに消したいワークフローの名前（Actionsタブの左メニューの表記）を正確に書いてください
+          workflow_name_input: "Update Arbitrage Data"
