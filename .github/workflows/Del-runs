@@ -1,4 +1,4 @@
-name: Delete All Workflow Runs
+name: Delete Old Workflow Runs
 
 on:
   workflow_dispatch: # 手動実行ボタンを有効化
@@ -15,5 +15,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
-          retain_days: 0          # 0日経過（＝すべて）の履歴を対象にする
-          keep_minimum_runs: 0    # 残す件数を0にする
+          retain_days: 3          # 直近3日間に実行された履歴は残す
+          keep_minimum_runs: 5    # 最新の5件の履歴は必ず残す
+          # 👇 成功(completed)とキャンセル(cancelled)を削除対象にし、失敗(failure)は残す
+          delete_workflow_by_status_current: "completed,cancelled"
